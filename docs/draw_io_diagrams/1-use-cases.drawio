@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Use cases" id="use-cases">
+    <mxGraphModel dx="1172" dy="655" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c2" value="Hotel booking app" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;spacingTop=8;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="260" y="40" width="520" height="420" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3" value="Guest" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="130" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4" value="Receptionist" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="310" width="30" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5" value="Search free rooms" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="90" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="c6" value="Book a room" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="170" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="c7" value="View a booking" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="250" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="c8" value="Cancel a booking" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="330" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="c9" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c3" target="c5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c10" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c3" target="c6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c11" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c3" target="c7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c12" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c3" target="c8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c13" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c4" target="c5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c14" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c4" target="c6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c15" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c4" target="c7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c16" value="" style="endArrow=none;html=1;" edge="1" parent="1" source="c4" target="c8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,68 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Activity - book" id="activity---book">
+    <mxGraphModel dx="1172" dy="655" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c2" value="" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="285" y="30" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3" value="Reserve request received" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="210" y="90" width="180" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4" value="Check-out after check-in?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="190" y="170" width="220" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5" value="InvalidDates · save nothing" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="520" y="187" width="200" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="c6" value="A Confirmed booking shares a night?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="190" y="300" width="220" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="c7" value="Unavailable · save nothing" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="520" y="327" width="200" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="c8" value="Save the reservation as Confirmed" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="200" y="460" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="c9" value="Send the confirmation email" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="210" y="550" width="180" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="c10" value="Accepted + reservation id" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="210" y="635" width="180" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="c11" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="285" y="710" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="c12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="c2" target="c3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="c3" target="c4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c14" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;verticalAlign=top;" edge="1" parent="1" source="c4" target="c6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c15" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="c4" target="c5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c16" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="c6" target="c7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c17" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;verticalAlign=top;" edge="1" parent="1" source="c6" target="c8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="c8" target="c9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="c9" target="c10">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="c10" target="c11">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
