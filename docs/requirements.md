@@ -34,3 +34,8 @@ A booking can be looked up by its id.
 Check: R101 → Maya, R7, 12–14 November, Confirmed.
 Proof: Maya cancels R101: True
 (The demo does not print a booking. This line shows the lookup works, because Cancel first finds R101 by its id in the store with `find`.)
+
+## R6 · Failed message
+If the confirmation cannot be sent, the booking stays saved and Accepted, and the failure is reported.
+Check: the mail server is down when Maya books R7 for 12–14 November → Accepted R101, and the failure is reported.
+Proof: test_a_failed_confirmation_keeps_the_booking passes.

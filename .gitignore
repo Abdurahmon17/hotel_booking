@@ -12,10 +12,20 @@ env/
 .env
 .env.*
 
-# VS Code
-.vscode/
+# Tests and tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# PyCharm
+# draw.io autosave and backup files
+.$*.bkp
+.$*.dtmp
+*.drawio.bkp
+
+# Editors
+.vscode/
 .idea/
 
 # OS files
@@ -32,3 +42,8 @@ dist/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Archives and temporary output files
+*.zip
+new.txt
+old.txt

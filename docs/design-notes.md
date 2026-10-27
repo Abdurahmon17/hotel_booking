@@ -36,3 +36,33 @@ Result: the race demo printed "Maya: Accepted R101", "Omar: Accepted R102" and "
 What happened: Maya and Omar both got "Accepted", so R7 ended with 2 Confirmed reservations for the same nights, and requirement R3 was broken. Omar's request checked the store 0.1 s after Maya's, before Maya's booking was saved, so it saw an empty store and went ahead.
 
 Where the problem appears: between the call HasOverlap(room, stay) and the call Save(reservation) inside Reserve. The answer from HasOverlap was already out of date when Save ran, because the other request saved in the gap. We do not fix it today; P09 fixes it in the database.
+
+
+
+# P04 design notes
+
+## Refactoring
+
+Refactoring changes how the code is organised (names, files, interfaces) but not what the program does: every request must give exactly the same result as before.
+
+Must stay the same:
+- The tests from Step 2: all 6 still pass after every move.
+- The demo output: the same nine lines as in P03.
+- The race demo: still prints "Double booking!", because refactoring does not fix bugs.
+
+
+## What our code breaks
+
+- BookingService asks for exactly ReservationStore (D: dependency inversion).
+  In P07 we would have to edit BookingService just to use a database.
+
+- BookingService asks for exactly EmailSender (D and O: dependency inversion and open/closed).
+  To add SMS confirmations we would have to edit BookingService, its constructor and Reserve(), even though the booking rules did not change. A new feature should be new code, not a change to working code.
+
+
+
+## Proof
+
+- Tests: 6 tests ran and all 6 passed (python -m unittest -v). No test body changed, only the import and new_service().
+- Demo: the output is the same as in P03, all nine lines match, line by line.
+- Race: it still double-books (Confirmed reservations for R7 on 12-14 Nov: 2, "Double booking!"), because refactoring changes the structure and not the behaviour. P09 fixes it.
