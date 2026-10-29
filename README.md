@@ -1,8 +1,8 @@
-# Hotel Booking App · P04 (refactored version)
+# Hotel Booking App · P05 (business contexts)
 
 Course: Advanced Software Design & Architecture
 
-A small hotel takes bookings on its website and at the reception desk. This project is the hotel booking app. In P03 it was designed (requirements and UML diagrams) and written as one Python file. In P04 the same app was **refactored**: its behaviour did not change, but its design is now easy to change. All data is still kept in memory.
+A small hotel takes bookings on its website and at the reception desk. This project is the hotel booking app. In P03 it was designed (requirements and UML diagrams) and written as one Python file. In P04 the same app was **refactored**: its behaviour did not change, but its design is now easy to change. In P05 the hotel's business areas were written down (no code changed). All data is still kept in memory.
 
 **The one rule of the whole course:** one room, one night, at most one guest.
 
@@ -38,7 +38,9 @@ hotel-booking/
 ├── docs/
 │   ├── requirements.md        requirements R1–R6 with examples and proof lines
 │   ├── design-notes.md        written answers from P03 and P04
-│   └── draw_io_diagrams/      6 draw.io diagrams (see "Design documents")
+│   ├── quality-scenarios.md   stakeholders and quality scenarios S1–S6 (P05)
+│   ├── contexts.md            four business contexts, their words, rules and borders (P05)
+│   └── draw_io_diagrams/      7 draw.io diagrams (see "Design documents")
 └── old/
     └── hotel_booking.py       the P03 version in one file, kept for comparison
 ```
@@ -179,8 +181,28 @@ The diagrams are in `docs/draw_io_diagrams/` (open them at app.diagrams.net, Fil
 | `4-sequence-cancel.drawio` | The messages when Maya cancels R101 |
 | `5-activity-book.drawio` | The decisions of a booking request and the paths where it stops |
 | `6-classes-after.drawio` | The P04 design: 2 interfaces, 5 classes, `uses` and `implements` |
+| `7-context-map.drawio` | The P05 context map: 4 contexts and 3 arrows, all starting at Reservations |
 
 `docs/design-notes.md` contains the written answers: why we design before coding, where the methods live, the activity traces, the race explanation (P03), and the refactoring rule, what our code broke and the proof that nothing changed (P04).
+
+## Business contexts (P05)
+
+P05 changed no code. It wrote down which business area owns what, so that P06 can turn each area into a module.
+
+| Context | Job | Rules it owns |
+|---|---|---|
+| Rooms (Inventory) | Knows which rooms the hotel sells | out-of-service rooms are not offered; the nightly price depends on the room type |
+| Reservations | Decides whether a guest gets a room for some nights, and keeps every reservation | no two Confirmed reservations share a night; check-out after check-in; cancelling frees the nights |
+| Payments | Takes deposits and records whether they were paid | the deposit is 30% of the stay's price; only a Paid deposit can be refunded |
+| Notifications | Tells guests what happened, by email or SMS | a failed message is recorded as Failed and never changes the reservation |
+
+Arrows on the context map (all start at Reservations):
+
+- Reservations → Rooms: question "which rooms exist?"
+- Reservations → Payments: question "take a deposit" (from P17)
+- Reservations → Notifications: event `ReservationConfirmed` (reservation id, guest email, room number, check-in, check-out)
+
+`docs/quality-scenarios.md` lists the stakeholders and six measured quality scenarios (S1 performance, S2 data integrity, S3 availability, S4 security, S5 modifiability, S6 sustainability). `docs/contexts.md` holds the hotel's words, the contexts, the words that mean different things in different contexts, the owner of each of eight rules, and what crosses each border.
 
 ## Known problem: the race condition
 
@@ -199,6 +221,7 @@ Refactoring does not fix bugs, so the problem is still there. A lock in the code
 
 | Practice | What changes |
 |---|---|
-| P05 · P06 | Split the hotel into business areas (rooms, reservations, payments, notifications) and turn them into modules |
+| P06 | Turn each context into a module with a public contract; Notifications gets its own `Confirmation` type; the same 8 tests and nine demo lines |
+| L04 | System design: how many requests, HTTP, a database, and when a cache helps |
 | P07 · P08 | A PostgreSQL store that keeps the `ReservationStore` promise, an HTTP API and a cache for search; `BookingService` does not change |
 | P09 | Fix the race with database locks and constraints |
