@@ -1,4 +1,4 @@
-"""P04 - Hotel booking: the same app as P03, in a cleaner structure.
+"""P06 - Hotel booking: the P04 app as a modular monolith with four modules.
 
 python main.py          -> the normal demo
 python main.py --race   -> two guests book the same room at the same moment
@@ -10,13 +10,20 @@ import threading
 import time
 from datetime import date
 
-from hotel_booking import BookingResult, BookingService, DateRange, EmailNotificationSender, Guest, InMemoryReservationStore, Room
+from hotel_booking.notifications.internal import EmailNotificationSender
+from hotel_booking.reservations import BookingResult, BookingService, DateRange, Guest
+from hotel_booking.reservations.internal import InMemoryReservationStore
+from hotel_booking.rooms import Room
+from hotel_booking.rooms.internal import InMemoryRoomCatalog
 
 R7 = Room("R7", "Standard")
 R8 = Room("R8", "Deluxe")
 MAYA = Guest("Maya", "maya@example.com")
 OMAR = Guest("Omar", "omar@example.com")
 NORA = Guest("Nora", "nora@example.com")
+
+# The wiring: the only app code that imports the internal modules.
+CATALOG = InMemoryRoomCatalog([R7, R8])
 
 
 def nov(check_in: int, check_out: int) -> DateRange:
@@ -31,7 +38,7 @@ def run_demo() -> None:
     # The one place that chooses the real store and sender.
     store = InMemoryReservationStore()
     email = EmailNotificationSender()
-    service = BookingService([R7, R8], store, email)
+    service = BookingService(CATALOG.all(), store, email)
 
     print(f"Free rooms 12-14 Nov: {names(service.find_free_rooms(nov(12, 14)))}")
     print(f"Maya books R7 12-14 Nov: {service.reserve(MAYA, R7, nov(12, 14))}")
@@ -47,7 +54,7 @@ def run_demo() -> None:
 def run_race() -> None:
     store = InMemoryReservationStore()
     # Each request now spends half a second between checking and saving.
-    service = BookingService([R7, R8], store, EmailNotificationSender(), slow_step_seconds=0.5)
+    service = BookingService(CATALOG.all(), store, EmailNotificationSender(), slow_step_seconds=0.5)
     stay = nov(12, 14)
     results: dict[str, BookingResult] = {}
 

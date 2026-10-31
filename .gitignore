@@ -18,6 +18,7 @@ env/
 .ruff_cache/
 .coverage
 htmlcov/
+.import_linter_cache/
 
 # draw.io autosave and backup files
 .$*.bkp

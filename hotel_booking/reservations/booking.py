@@ -3,10 +3,21 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Protocol
 
-from hotel_booking.domain import DateRange, Guest, Reservation, Room
-from hotel_booking.notifications import NotificationSender
-from hotel_booking.stores import ReservationStore
+from hotel_booking.notifications import Confirmation, NotificationSender
+from hotel_booking.reservations.domain import DateRange, Guest, Reservation
+from hotel_booking.rooms import Room
+
+
+class ReservationStore(Protocol):
+    """What BookingService needs from storage. Today a list in memory; from P07 a database."""
+
+    def count(self) -> int: ...
+    def has_overlap(self, room: Room, stay: DateRange) -> bool: ...
+    def save(self, reservation: Reservation) -> None: ...
+    def find(self, reservation_id: str) -> Reservation | None: ...
+    def count_confirmed(self, room: Room, stay: DateRange) -> int: ...
 
 
 @dataclass(frozen=True)
@@ -20,7 +31,7 @@ class BookingResult:
 
 
 class BookingService:
-    """Depends only on the two protocols; main.py decides which store and sender to use."""
+    """Owns the booking rule. Uses only the public contracts of Rooms and Notifications."""
 
     def __init__(self, rooms: list[Room], store: ReservationStore, notifications: NotificationSender,
                  slow_step_seconds: float = 0) -> None:
@@ -43,7 +54,9 @@ class BookingService:
         reservation = Reservation(f"R{101 + self.store.count()}", guest, room, stay)
         self.store.save(reservation)
         try:
-            self.notifications.send_confirmation(reservation)
+            # Notifications gets its own message: the five fields it needs, not the Reservation.
+            self.notifications.send_confirmation(
+                Confirmation(reservation.id, guest.email, room.number, stay.check_in, stay.check_out))
         except Exception:
             # R6: the booking is already saved, so a failed message must not undo or hide it.
             return BookingResult("Accepted", reservation.id, notification_failed=True)

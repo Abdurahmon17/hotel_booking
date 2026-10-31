@@ -1,0 +1,21 @@
+# The three borders between the modules. Run:  lint-imports
+[tool.importlinter]
+root_package = "hotel_booking"
+
+[[tool.importlinter.contracts]]
+name = "Reservations uses only the public contracts of other modules"
+type = "forbidden"
+source_modules = ["hotel_booking.reservations"]
+forbidden_modules = ["hotel_booking.rooms.internal", "hotel_booking.payments.internal", "hotel_booking.notifications.internal"]
+
+[[tool.importlinter.contracts]]
+name = "Rooms does not depend on any other module"
+type = "forbidden"
+source_modules = ["hotel_booking.rooms"]
+forbidden_modules = ["hotel_booking.reservations", "hotel_booking.payments", "hotel_booking.notifications"]
+
+[[tool.importlinter.contracts]]
+name = "Payments and Notifications do not depend on Reservations"
+type = "forbidden"
+source_modules = ["hotel_booking.payments", "hotel_booking.notifications"]
+forbidden_modules = ["hotel_booking.reservations"]

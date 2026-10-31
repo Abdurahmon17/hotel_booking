@@ -1,5 +1,4 @@
 # P03 design notes
-
 ## Why design before code
 
 Low-level design decides which classes the program has (for example Guest, Room and Reservation), what information each class keeps, which methods each class has, and which class calls which class. We write these decisions down as UML diagrams before coding. This way a rule such as "is the room already booked?" is written once, in one place (DateRange.Overlaps()), and both the website and the reception desk use it. When a rule changes, we change one method instead of finding several copies, and a new developer can understand the booking flow by reading one diagram.
@@ -40,7 +39,6 @@ Where the problem appears: between the call HasOverlap(room, stay) and the call 
 
 
 # P04 design notes
-
 ## Refactoring
 
 Refactoring changes how the code is organised (names, files, interfaces) but not what the program does: every request must give exactly the same result as before.
@@ -60,9 +58,47 @@ Must stay the same:
   To add SMS confirmations we would have to edit BookingService, its constructor and Reserve(), even though the booking rules did not change. A new feature should be new code, not a change to working code.
 
 
-
 ## Proof
 
 - Tests: 6 tests ran and all 6 passed (python -m unittest -v). No test body changed, only the import and new_service().
 - Demo: the output is the same as in P03, all nine lines match, line by line.
 - Race: it still double-books (Confirmed reservations for R7 on 12-14 Nov: 2, "Double booking!"), because refactoring changes the structure and not the behaviour. P09 fixes it.
+
+
+# P06 design notes
+## Before
+
+- Tests: 8 tests ran and all 8 passed (python -m unittest -v).
+- Demo: the output is the nine lines from P03 and P04, from "Free rooms 12-14 Nov: R7, R8" to "Confirmation emails sent: 2".
+- Race: it still double-books (Confirmed reservations for R7 on 12-14 Nov: 2, "Double booking!"). Moving code into modules does not fix bugs; P09 fixes it in the database.
+
+## Modules
+
+| Module | Public contract (others may use) | Internal code (only the module, the wiring and the tests) |
+|---|---|---|
+| Rooms | Room, the room catalog promise | InMemoryRoomCatalog |
+| Reservations | BookingService, BookingResult, Reservation, DateRange, Guest, ReservationStatus, the store promise | InMemoryReservationStore |
+| Payments | PaymentStatus, the payment service promise | SimulatedPaymentService |
+| Notifications | Confirmation, the notification sender promise | EmailNotificationSender, SmsNotificationSender |
+
+
+## Architecture rules
+
+1. Reservations uses only the public contracts of other modules: BookingService may use the Notifications contract, never the email sender. This way Notifications can change how it sends without touching booking.
+2. Rooms does not depend on any other module: it knows nothing about reservations, money or messages, so it is the base everything else builds on.
+3. Payments and Notifications do not depend on Reservations: the arrows point one way, from Reservations outwards, so there is never a dependency circle.
+
+The rules run as import-linter checks (lint-imports) configured in pyproject.toml.
+
+
+## Broken on purpose
+
+Rule 1 failed ("Reservations uses only the public contracts of other modules"): the message named hotel_booking.reservations.booking importing hotel_booking.notifications.internal (the email sender), so the check found the forbidden line. The 8 tests still passed, only lint-imports caught it. After I removed the line, all 3 contracts were kept again.
+
+## After
+
+- Tests: 8 tests ran and all 8 passed (python -m unittest -v), plus 3 import-linter contracts kept (lint-imports).
+- Demo: the output is the same nine lines as before, from "Free rooms 12-14 Nov: R7, R8" to "Confirmation emails sent: 2".
+- Race: it still double-books (Confirmed reservations for R7 on 12-14 Nov: 2, "Double booking!"). P09 fixes it in the database.
+
+Compared with "Before": tests, demo and race match. The code is now in four modules, and the behaviour did not change.

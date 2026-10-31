@@ -1,19 +1,8 @@
-# hotel_booking/stores.py
+# hotel_booking/reservations/internal.py
 from __future__ import annotations
 
-from typing import Protocol
-
-from hotel_booking.domain import DateRange, Reservation, Room
-
-
-class ReservationStore(Protocol):
-    """What BookingService needs from storage. Today a list in memory; from P07 a database."""
-
-    def count(self) -> int: ...
-    def has_overlap(self, room: Room, stay: DateRange) -> bool: ...
-    def save(self, reservation: Reservation) -> None: ...
-    def find(self, reservation_id: str) -> Reservation | None: ...
-    def count_confirmed(self, room: Room, stay: DateRange) -> int: ...
+from hotel_booking.reservations.domain import DateRange, Reservation
+from hotel_booking.rooms import Room
 
 
 class InMemoryReservationStore:

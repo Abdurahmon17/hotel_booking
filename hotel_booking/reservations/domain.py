@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import date
 from enum import Enum
 
+from hotel_booking.rooms import Room
+
 
 # The stay: check-in day included, check-out day excluded (half-open).
 @dataclass(frozen=True)
@@ -24,12 +26,6 @@ class DateRange:
 class Guest:
     name: str
     email: str
-
-
-@dataclass(frozen=True)
-class Room:
-    number: str
-    type: str
 
 
 class ReservationStatus(Enum):
