@@ -102,3 +102,27 @@ Rule 1 failed ("Reservations uses only the public contracts of other modules"): 
 - Race: it still double-books (Confirmed reservations for R7 on 12-14 Nov: 2, "Double booking!"). P09 fixes it in the database.
 
 Compared with "Before": tests, demo and race match. The code is now in four modules, and the behaviour did not change.
+
+
+# P07 design notes
+## API decisions
+
+- Order of free rooms: the free rooms come in text order of the room number, so R10 comes before R7. The "after" value of the next page is compared as text too, so the order and the paging use the same rule.
+- Which key a client compares: the client compares the error's title (Unavailable, InvalidDates and so on). The detail is only a sentence for people and may change, so clients must not depend on it.
+- Room type: it is not a fixed list. It is catalog data from the rooms table, such as Standard or Deluxe, so a new type needs no change to the API.
+
+## API tests
+
+- Search: GET /rooms/availability?checkIn=2026-11-12&checkOut=2026-11-14 → 200 and the exact body with R7 and R8.
+- Book, then book again: POST Maya for R7 12–14 Nov → 201 {"id":"R101","status":"Confirmed","notificationFailed":false}; then POST Omar for R7 13–15 Nov → 409 Unavailable.
+- Wrong dates: POST with checkOut equal to checkIn → 400 InvalidDates as application/problem+json.
+- Cancel twice: POST Maya, then DELETE /reservations/R101 → 204; DELETE again → 404 NotFound.
+
+The tests use the list store through FastAPI's TestClient, so they need no server and no database.
+
+
+## After
+
+- Checks: 15 green: 12 tests (8 behaviour + 4 API) and 3 architecture contracts kept (python -m unittest -v, lint-imports). The demo prints the same nine lines and the race still double-books.
+- The seven answers: all seven requests of docs/api-check.md answered exactly as expected (200, 201, 409, 400, 200, 204, 404).
+- Restart check: Maya booked R7 again (201 R102), I stopped and restarted the app, and the search still showed only R8 free, because the reservation lives in PostgreSQL. The reservations table shows R101 Cancelled and R102 Confirmed.

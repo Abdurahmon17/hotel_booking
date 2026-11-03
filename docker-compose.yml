@@ -1,0 +1,17 @@
+# The hotel booking app's database. Start: docker compose up -d   Stop: docker compose down
+# (with Podman: podman-compose up -d   and   podman-compose down)
+services:
+  db:
+    image: docker.io/library/postgres:18
+    environment:
+      POSTGRES_DB: hotel
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel       # for your laptop only
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro   # runs once, on the first start
+      - hotel-data:/var/lib/postgresql                          # the data survives a restart
+
+volumes:
+  hotel-data:

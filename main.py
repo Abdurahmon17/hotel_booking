@@ -1,20 +1,28 @@
-"""P06 - Hotel booking: the P04 app as a modular monolith with four modules.
+"""P07 - Hotel booking: the P06 app behind an HTTP API, with its reservations in PostgreSQL.
 
-python main.py          -> the normal demo
+python main.py          -> the API on http://localhost:5080 (first: docker compose up -d)
+python main.py --demo   -> the P06 demo, with the data in lists
 python main.py --race   -> two guests book the same room at the same moment
 """
 from __future__ import annotations
 
+import os
 import sys
 import threading
 import time
+from contextlib import contextmanager
 from datetime import date
 
+import uvicorn
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from hotel_booking.api import create_app
 from hotel_booking.notifications.internal import EmailNotificationSender
 from hotel_booking.reservations import BookingResult, BookingService, DateRange, Guest
-from hotel_booking.reservations.internal import InMemoryReservationStore
+from hotel_booking.reservations.internal import InMemoryReservationStore, PostgresReservationStore
 from hotel_booking.rooms import Room
-from hotel_booking.rooms.internal import InMemoryRoomCatalog
+from hotel_booking.rooms.internal import InMemoryRoomCatalog, PostgresRoomCatalog
 
 R7 = Room("R7", "Standard")
 R8 = Room("R8", "Deluxe")
@@ -75,5 +83,27 @@ def run_race() -> None:
           if confirmed > 1 else "Only one guest has R7.")
 
 
+def run_api() -> None:
+    # The wiring for the web app: PostgreSQL from docker-compose.yml (HOTEL_DB_PORT only if 5432 is taken).
+    engine = create_engine(f"postgresql+psycopg://hotel:hotel@localhost:{os.getenv('HOTEL_DB_PORT', '5432')}/hotel")
+    rooms = PostgresRoomCatalog(engine).all()
+    email = EmailNotificationSender()
+
+    @contextmanager
+    def unit_of_work():
+        # One request: a fresh store over its own session; save what changed at the end.
+        with Session(engine) as session:
+            store = PostgresReservationStore(session, rooms)
+            yield BookingService(rooms, store, email)
+            store.save_changes()
+
+    uvicorn.run(create_app(rooms, unit_of_work), host="localhost", port=5080)
+
+
 if __name__ == "__main__":
-    run_race() if "--race" in sys.argv else run_demo()
+    if "--race" in sys.argv:
+        run_race()
+    elif "--demo" in sys.argv:
+        run_demo()
+    else:
+        run_api()
