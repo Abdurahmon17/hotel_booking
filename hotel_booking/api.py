@@ -1,5 +1,6 @@
 # hotel_booking/api.py
-"""The HTTP API: three endpoints that turn HTTP requests into BookingService calls and back.
+"""The HTTP API: three endpoints that turn HTTP requests into BookingService calls and back,
+and GET /stats with what the searches cost.
 
 It lives outside the four modules and uses only their public contracts. main.py decides
 which store the endpoints use, through unit_of_work.
@@ -7,6 +8,7 @@ which store the endpoints use, through unit_of_work.
 from __future__ import annotations
 
 import re
+import threading
 from contextlib import AbstractContextManager
 from datetime import date
 from pathlib import Path
@@ -16,7 +18,8 @@ from fastapi import Body, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 
-from hotel_booking.reservations import BookingResult, BookingService, DateRange, Guest
+from hotel_booking.api_cache import AvailabilityCache
+from hotel_booking.reservations import BookingResult, BookingService, DateRange, Guest, Reservation, ReservationStore
 from hotel_booking.rooms import Room
 
 # One request's work: "with unit_of_work() as service:" gives the endpoint a BookingService,
@@ -26,6 +29,51 @@ UnitOfWork = Callable[[], AbstractContextManager[BookingService]]
 FIELDS = ("guestName", "guestEmail", "room", "checkIn", "checkOut")
 BODY_DETAIL = "The body must be JSON with guestName, guestEmail, room, checkIn and checkOut."
 DATE_DETAIL = "checkIn and checkOut must be dates such as 2026-11-12."
+
+
+class Stats:
+    """The four counters of GET /stats. FastAPI runs requests on several threads at once,
+    so a lock makes every += 1 exact."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._counts = {"searches": 0, "databaseQueries": 0, "cacheHits": 0, "cacheMisses": 0}
+
+    def add(self, name: str) -> None:
+        with self._lock:
+            self._counts[name] += 1
+
+    def as_dict(self) -> dict[str, int]:
+        with self._lock:
+            return dict(self._counts)
+
+
+class CountingReservationStore:
+    """Passes every call on to the real store and counts it: each call is one question to the database."""
+
+    def __init__(self, store: ReservationStore, stats: Stats) -> None:
+        self._store = store
+        self._stats = stats
+
+    def count(self) -> int:
+        self._stats.add("databaseQueries")
+        return self._store.count()
+
+    def has_overlap(self, room: Room, stay: DateRange) -> bool:
+        self._stats.add("databaseQueries")
+        return self._store.has_overlap(room, stay)
+
+    def save(self, reservation: Reservation) -> None:
+        self._stats.add("databaseQueries")
+        self._store.save(reservation)
+
+    def find(self, reservation_id: str) -> Reservation | None:
+        self._stats.add("databaseQueries")
+        return self._store.find(reservation_id)
+
+    def count_confirmed(self, room: Room, stay: DateRange) -> int:
+        self._stats.add("databaseQueries")
+        return self._store.count_confirmed(room, stay)
 
 
 def problem(status: int, title: str, detail: str) -> JSONResponse:
@@ -54,7 +102,7 @@ def to_http(result: BookingResult) -> JSONResponse:
     return problem(400, "InvalidDates", "checkOut must be after checkIn.")
 
 
-def create_app(rooms: list[Room], unit_of_work: UnitOfWork) -> FastAPI:
+def create_app(rooms: list[Room], unit_of_work: UnitOfWork, stats: Stats, cache: AvailabilityCache) -> FastAPI:
     # docs/openapi.yaml is the contract, so FastAPI must not publish one of its own.
     app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 
@@ -65,6 +113,10 @@ def create_app(rooms: list[Room], unit_of_work: UnitOfWork) -> FastAPI:
     @app.get("/openapi.yaml")
     def contract() -> Response:
         return Response(Path("docs/openapi.yaml").read_text(encoding="utf-8"), media_type="application/yaml")
+
+    @app.get("/stats")
+    def read_stats() -> JSONResponse:
+        return JSONResponse(stats.as_dict())
 
     @app.get("/rooms/availability")
     def find_free_rooms(checkIn: str = "", checkOut: str = "", limit: str = "20", after: str = "") -> JSONResponse:
@@ -77,8 +129,19 @@ def create_app(rooms: list[Room], unit_of_work: UnitOfWork) -> FastAPI:
         if not re.fullmatch(r"[0-9]{1,3}", limit) or not 1 <= int(limit) <= 100:
             return problem(400, "InvalidRequest", "limit must be a whole number from 1 to 100.")
 
-        with unit_of_work() as service:
-            free = service.find_free_rooms(stay)
+        stats.add("searches")
+        # Cache-aside (L04): Redis first; only on a miss ask PostgreSQL, then keep a copy.
+        key = cache.key(checkIn, checkOut)
+        cached = cache.get(key)
+        if cached is not None:
+            stats.add("cacheHits")
+            numbers = cached.split(",")
+            free = [room for room in rooms if room.number in numbers]
+        else:
+            stats.add("cacheMisses")
+            with unit_of_work() as service:
+                free = service.find_free_rooms(stay)
+            cache.set(key, ",".join(sorted(room.number for room in free)))
         # Cursor pagination (L04): the rooms after the last one the client has seen, in text order.
         rest = sorted((room for room in free if room.number > after), key=lambda room: room.number)
         page = rest[:int(limit)]
@@ -101,6 +164,8 @@ def create_app(rooms: list[Room], unit_of_work: UnitOfWork) -> FastAPI:
 
         with unit_of_work() as service:
             result = service.reserve(Guest(body["guestName"], body["guestEmail"]), room, DateRange(check_in, check_out))
+        if result.outcome == "Accepted":
+            cache.invalidate()  # after the unit of work: the booking is saved in PostgreSQL
         return to_http(result)
 
     @app.delete("/reservations/{reservation_id}")
@@ -109,6 +174,7 @@ def create_app(rooms: list[Room], unit_of_work: UnitOfWork) -> FastAPI:
             cancelled = service.cancel(reservation_id)
         if not cancelled:
             return problem(404, "NotFound", f"There is no confirmed reservation {reservation_id}.")
+        cache.invalidate()  # after the unit of work: the cancel is saved in PostgreSQL
         return Response(status_code=204)
 
     return app

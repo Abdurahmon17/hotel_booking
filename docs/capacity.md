@@ -26,3 +26,9 @@ These are estimates from assumptions, not measurements. P08 measures the real ap
 
 - p95 of 1,000 searches for 12–14 Nov, target ≤ 1 s (S1): P08.
 - Database queries per search (GET /stats): P08.
+
+
+## Measured in P08
+
+- p95 of 1,000 searches for 12–14 Nov: 5.3 ms without the cache and 2.6 ms with it, so both meet S1 (≤ 1 s) here (docs/cache-experiment.md).
+- Database queries per search: 2 with two rooms (one per room) without the cache; 2 for all 1,000 searches with it (GET /stats).

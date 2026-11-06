@@ -126,3 +126,16 @@ The tests use the list store through FastAPI's TestClient, so they need no serve
 - Checks: 15 green: 12 tests (8 behaviour + 4 API) and 3 architecture contracts kept (python -m unittest -v, lint-imports). The demo prints the same nine lines and the race still double-books.
 - The seven answers: all seven requests of docs/api-check.md answered exactly as expected (200, 201, 409, 400, 200, 204, 404).
 - Restart check: Maya booked R7 again (201 R102), I stopped and restarted the app, and the search still showed only R8 free, because the reservation lives in PostgreSQL. The reservations table shows R101 Cancelled and R102 Confirmed.
+
+# P08 design notes
+
+## Cache rule
+
+Booking never reads the cache: BookingService always asks PostgreSQL, the source of truth. The cache only keeps copies of search answers for 30 seconds, so a stale copy can show R7 as free, but Omar's booking of R7 still gets 409 Unavailable.
+
+
+## After
+
+- Checks: 17 green: 14 tests (8 behaviour + 6 API) and 3 architecture contracts kept (python -m unittest -v, lint-imports). The demo prints the same nine lines and the race still double-books.
+- Measurements: 1,000 searches for 12–14 Nov cost 2,000 database queries without the cache and 2 with it; the average fell from 3.4 ms to 1.5 ms and the p95 from 5.3 ms to 2.6 ms (my laptop).
+- Stale result and its fix: after a booking the cached search still listed R7 as free for up to 30 seconds, while Omar's booking got 409 Unavailable because booking reads PostgreSQL. A successful POST or DELETE now raises availability:version, so the next search is fresh.

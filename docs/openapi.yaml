@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Hotel booking API
-  version: 1.0.0
+  version: 1.1.0
   description: Search free rooms, book a room and cancel a reservation.
 servers:
   - url: http://localhost:5080
@@ -84,6 +84,18 @@ paths:
         "404":
           $ref: "#/components/responses/Problem"
           description: NotFound when there is no confirmed reservation with this id.
+  /stats:
+    get:
+      operationId: getStats
+      summary: What the searches cost since the app started
+      description: Four counters for measuring the search. They start at 0 when the app starts and count this running app only (each instance has its own). databaseQueries counts every question the reservation store sends to PostgreSQL.
+      responses:
+        "200":
+          description: The four counters.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Stats" }
+              example: { searches: 1000, databaseQueries: 2000, cacheHits: 0, cacheMisses: 0 }
 components:
   schemas:
     Room:
@@ -131,6 +143,14 @@ components:
           description: The error's name. Clients compare this value; detail is for people.
         status: { type: integer }
         detail: { type: string }
+    Stats:
+      type: object
+      required: [searches, databaseQueries, cacheHits, cacheMisses]
+      properties:
+        searches: { type: integer, minimum: 0, description: Answers of GET /rooms/availability that reached the search. }
+        databaseQueries: { type: integer, minimum: 0, description: Questions the reservation store sent to PostgreSQL. }
+        cacheHits: { type: integer, minimum: 0, description: Searches answered from a copy in Redis. }
+        cacheMisses: { type: integer, minimum: 0, description: Searches that found no copy and asked PostgreSQL. }
   responses:
     Problem:
       description: What went wrong, as problem details (RFC 9457).

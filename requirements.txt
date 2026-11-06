@@ -1,9 +1,10 @@
 # requirements.txt
-# Everything the Python project needs: import-linter from P06 and the five packages P07 adds.
+# Everything the Python project needs: import-linter from P06, the five packages P07 adds and redis from P08.
 # Install them all at once:  python -m pip install -r requirements.txt
 fastapi==0.162.0
 uvicorn==0.54.0
 sqlalchemy==2.1.6
 psycopg[binary]==3.3.6
 httpx==0.28.1
+redis==8.1.0
 import-linter

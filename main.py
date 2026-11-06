@@ -14,10 +14,12 @@ from contextlib import contextmanager
 from datetime import date
 
 import uvicorn
+from redis import Redis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from hotel_booking.api import create_app
+from hotel_booking.api import CountingReservationStore, Stats, create_app
+from hotel_booking.api_cache import AvailabilityCache, RedisKeyValueStore
 from hotel_booking.notifications.internal import EmailNotificationSender
 from hotel_booking.reservations import BookingResult, BookingService, DateRange, Guest
 from hotel_booking.reservations.internal import InMemoryReservationStore, PostgresReservationStore
@@ -84,20 +86,25 @@ def run_race() -> None:
 
 
 def run_api() -> None:
-    # The wiring for the web app: PostgreSQL from docker-compose.yml (HOTEL_DB_PORT only if 5432 is taken).
+    # The wiring for the web app: PostgreSQL and Redis from docker-compose.yml
+    # (HOTEL_DB_PORT and HOTEL_REDIS_PORT only if 5432 or 6379 is taken).
     engine = create_engine(f"postgresql+psycopg://hotel:hotel@localhost:{os.getenv('HOTEL_DB_PORT', '5432')}/hotel")
     rooms = PostgresRoomCatalog(engine).all()
     email = EmailNotificationSender()
+    stats = Stats()
+    redis = Redis(host="localhost", port=int(os.getenv("HOTEL_REDIS_PORT", "6379")), decode_responses=True)
+    redis.ping()  # stop here if Redis is not running
+    cache = AvailabilityCache(RedisKeyValueStore(redis))
 
     @contextmanager
     def unit_of_work():
-        # One request: a fresh store over its own session; save what changed at the end.
+        # One request: a fresh store over its own session, counted for GET /stats; save what changed at the end.
         with Session(engine) as session:
             store = PostgresReservationStore(session, rooms)
-            yield BookingService(rooms, store, email)
+            yield BookingService(rooms, CountingReservationStore(store, stats), email)
             store.save_changes()
 
-    uvicorn.run(create_app(rooms, unit_of_work), host="localhost", port=5080)
+    uvicorn.run(create_app(rooms, unit_of_work, stats, cache), host="localhost", port=5080)
 
 
 if __name__ == "__main__":
